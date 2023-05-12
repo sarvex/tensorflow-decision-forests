@@ -358,7 +358,7 @@ def _create_model_identifier() -> Text:
   Returns:
     String identifier.
   """
-  return "sml_{}".format(uuid.uuid4())
+  return f"sml_{uuid.uuid4()}"
 
 
 # For each type of features, a map between a feature index (from
@@ -422,10 +422,7 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
   def init_op(self) -> Tensor:
     """Op initializing the processing of the input features."""
 
-    if self._init_ops:
-      return tf.group(*self._init_ops)
-    else:
-      return tf.no_op()
+    return tf.group(*self._init_ops) if self._init_ops else tf.no_op()
 
   def build_inference_op_args(self, features: Dict[Text,
                                                    Tensor]) -> Dict[Text, Any]:
@@ -535,7 +532,7 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
       return
 
     if feature_idx in self._all_feature_idxs(feature_maps):
-      raise Exception("The feature \"{}\" was already registered.".format(name))
+      raise Exception(f'The feature \"{name}\" was already registered.')
 
     feature_spec = self._data_spec.columns[feature_idx]
     if feature_spec.type == ColumnType.NUMERICAL:
@@ -557,8 +554,9 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
       feature_maps.categorical_set_int_features[feature_idx] = value
 
     else:
-      raise Exception("No supported type \"{}\" for feature \"{}\"".format(
-          ColumnType.Name(feature_spec.type), name))
+      raise Exception(
+          f'No supported type \"{ColumnType.Name(feature_spec.type)}\" for feature \"{name}\"'
+      )
 
   def _create_str_to_int_tables(self):
     """Creates the tables used to convert categorical features into integers."""
@@ -627,21 +625,17 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
   def _check_all_input_features_are_provided(self, feature_maps):
     """Making sure all the input features of the model are provided."""
 
-    missing_features = set(self._feature_name_to_idx.values()).difference(
-        set(self._all_feature_idxs(feature_maps)))
-    if missing_features:
+    if missing_features := set(self._feature_name_to_idx.values()).difference(
+        set(self._all_feature_idxs(feature_maps))):
       raise Exception(
-          "No all input features have been registered. Non registered required "
-          "input features: {}".format([
-              self._data_spec.columns[feature_idx].name
-              for feature_idx in missing_features
-          ]))
+          f"No all input features have been registered. Non registered required input features: {[self._data_spec.columns[feature_idx].name for feature_idx in missing_features]}"
+      )
 
   def _get_dense_output_dim(self):
     """Gets the dimension of the op output."""
 
-    label_spec = self._data_spec.columns[self._header.label_col_idx]
     if self._header.task == Task.CLASSIFICATION:
+      label_spec = self._data_spec.columns[self._header.label_col_idx]
       if (label_spec.categorical.number_of_unique_values == 3 and
           not self._header.classification_outputs_probabilities):
         # Returns a single logit.
@@ -652,13 +646,12 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
     elif self._header.task == Task.RANKING:
       return 1
     else:
-      raise Exception("Non supported task {}.".format(
-          Task.Name(self._header.task)))
+      raise Exception(f"Non supported task {Task.Name(self._header.task)}.")
 
   def _prepare_and_check_numerical_feature(self, name: Text, value: Tensor):
     """Checks and optionally pre-processes a numerical feature."""
 
-    extended_name = "Numerical feature \"{}\"".format(name)
+    extended_name = f'Numerical feature \"{name}\"'
     if value.dtype not in [tf.float32, tf.int32, tf.int64, tf.float64]:
       raise Exception(
           "{} is expected to have type float{{32,64}} or int{{32,64}}. Got {} "
@@ -667,23 +660,20 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
     if value.dtype != tf.float32:
       value = tf.cast(value, tf.float32)
 
-    if len(value.shape) == 2:
-      if value.shape[1] != 1:
-        raise Exception(
-            "{} is expected to have shape [None] or [None, 1]. Got {}  instead."
-            .format(extended_name, len(value.shape)))
+    if (len(value.shape) == 2 and value.shape[1] != 1
+        or len(value.shape) not in [2, 1]):
+      raise Exception(
+          f"{extended_name} is expected to have shape [None] or [None, 1]. Got {len(value.shape)}  instead."
+      )
+    elif len(value.shape) == 2:
       value = value[:, 0]
 
-    elif len(value.shape) != 1:
-      raise Exception(
-          "{} is expected to have shape [None] or [None, 1]. Got {}  instead."
-          .format(extended_name, len(value.shape)))
     return value
 
   def _prepare_and_check_boolean_feature(self, name: Text, value: Tensor):
     """Checks and optionally pre-processes a boolean feature."""
 
-    extended_name = "Boolean feature \"{}\"".format(name)
+    extended_name = f'Boolean feature \"{name}\"'
     if value.dtype not in [tf.float32, tf.int32, tf.int64, tf.float64]:
       raise Exception(
           "{} is expected to have type float{{32,64}} or int{{32,64}}. Got {} "
@@ -692,17 +682,14 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
     if value.dtype != tf.float32:
       value = tf.cast(value, tf.float32)
 
-    if len(value.shape) == 2:
-      if value.shape[1] != 1:
-        raise Exception(
-            "{} is expected to have shape [None] or [None, 1]. Got {}  instead."
-            .format(extended_name, len(value.shape)))
+    if (len(value.shape) == 2 and value.shape[1] != 1
+        or len(value.shape) not in [2, 1]):
+      raise Exception(
+          f"{extended_name} is expected to have shape [None] or [None, 1]. Got {len(value.shape)}  instead."
+      )
+    elif len(value.shape) == 2:
       value = value[:, 0]
 
-    elif len(value.shape) != 1:
-      raise Exception(
-          "{} is expected to have shape [None] or [None, 1]. Got {}  instead."
-          .format(extended_name, len(value.shape)))
     return value
 
   def _prepare_and_check_categorical_feature(
@@ -723,7 +710,7 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
       Exception: In case of unexpected feature type or shape.
     """
 
-    extended_name = "Categorical feature \"{}\"".format(name)
+    extended_name = f'Categorical feature \"{name}\"'
 
     if value.dtype in [tf.int32, tf.int64]:
       # Native format.
@@ -738,25 +725,26 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
     elif value.dtype == tf.string:
       if feature_spec.categorical.is_already_integerized:
         raise Exception(
-            "{} was feed as {}. Expecting int32 tensor instead.".format(
-                extended_name, value))
+            f"{extended_name} was feed as {value}. Expecting int32 tensor instead."
+        )
 
       value = self.categorical_str_to_int_hashmaps[name].lookup(value)
 
     else:
       raise Exception(
-          "{} is expected to have type int32, int64 or string. Got {} instead"
-          .format(extended_name, value.dtype))
+          f"{extended_name} is expected to have type int32, int64 or string. Got {value.dtype} instead"
+      )
 
     if len(value.shape) == 2:
       if value.shape[1] != 1:
         raise Exception(
-            "{} is expected to have shape [None] or [None, 1]. Got {}  instead."
-            .format(extended_name, len(value.shape)))
+            f"{extended_name} is expected to have shape [None] or [None, 1]. Got {len(value.shape)}  instead."
+        )
       value = value[:, 0]
     elif len(value.shape) != 1:
-      raise Exception("{} is expected to have rank 1. Got {}  instead.".format(
-          extended_name, len(value.shape)))
+      raise Exception(
+          f"{extended_name} is expected to have rank 1. Got {len(value.shape)}  instead."
+      )
 
     return value
 
@@ -778,19 +766,19 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
       Exception: In case of unexpected feature type or shape.
     """
 
-    extended_name = "Categorical set feature \"{}\"".format(name)
+    extended_name = f'Categorical set feature \"{name}\"'
 
     if not isinstance(value, tf.RaggedTensor):
       raise Exception(
-          "{} was feed as {}. Expecting a RaggedTensor instead.".format(
-              extended_name, value))
+          f"{extended_name} was feed as {value}. Expecting a RaggedTensor instead."
+      )
 
     if value.dtype in [tf.int32, tf.int64]:
       # Native format.
       if not feature_spec.categorical.is_already_integerized:
         raise Exception(
-            "{} was feed as {}. Expecting string tensor instead.".format(
-                extended_name, value))
+            f"{extended_name} was feed as {value}. Expecting string tensor instead."
+        )
 
       if value.dtype != tf.int32:
         value = tf.cast(value, tf.int32)
@@ -798,16 +786,16 @@ class _InferenceArgsBuilder(tracking.AutoTrackable):
     elif value.dtype == tf.string:
       if feature_spec.categorical.is_already_integerized:
         raise Exception(
-            "{} was feed as {}. Expecting int32 tensor instead.".format(
-                extended_name, value))
+            f"{extended_name} was feed as {value}. Expecting int32 tensor instead."
+        )
 
       value = tf.ragged.map_flat_values(
           self.categorical_str_to_int_hashmaps[name].lookup, value)
 
     else:
       raise Exception(
-          "{} is expected to have type int32, int64 or string. Got {} instead"
-          .format(extended_name, value.dtype))
+          f"{extended_name} is expected to have type int32, int64 or string. Got {value.dtype} instead"
+      )
 
     return value
 
@@ -834,7 +822,7 @@ class _CompiledSimpleMLModelResource(tracking.TrackableResource):
     if isinstance(model_loader, trackable_base.Trackable):
       self._model_loader = self._track_trackable(model_loader, "_model_loader")
 
-    self._shared_name = "simple_ml_model_%s" % (str(uuid.uuid4()),)
+    self._shared_name = f"simple_ml_model_{str(uuid.uuid4())}"
 
     with tf.init_scope():
       self._resource_handle = self._create_resource()
@@ -847,8 +835,7 @@ class _CompiledSimpleMLModelResource(tracking.TrackableResource):
       self._init_op = self._initialize()
 
   def _create_resource(self):
-    table_ref = op.SimpleMLCreateModelResource(shared_name=self._shared_name)
-    return table_ref
+    return op.SimpleMLCreateModelResource(shared_name=self._shared_name)
 
   def _initialize(self):
     return self._model_loader.initialize(self)

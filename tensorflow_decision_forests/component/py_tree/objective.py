@@ -76,13 +76,13 @@ class ClassificationObjective(AbstractObjective):
       raise ValueError(
           "At least one of classes or num_classes should be provided")
 
-    if classes is not None and num_classes is not None:
-      if len(classes) != num_classes:
+    if classes is not None:
+      if num_classes is None:
+        num_classes = len(classes)
+
+      elif len(classes) != num_classes:
         raise ValueError("If both num_classes and classes are provided, "
                          "classes should contain num_classes elements.")
-    elif classes is not None:
-      num_classes = len(classes)
-
     if num_classes < 2:  # pytype: disable=unsupported-operands
       raise ValueError("The number of unique classes should be at least 2 i.e."
                        " binary classification")

@@ -182,16 +182,14 @@ class FeatureUsage(object):
     self._guide = data_spec_pb2.ColumnGuide()
 
     # Check matching between hyper-parameters and semantic.
-    if semantic != FeatureSemantic.NUMERICAL:
-      if discretized is not None:
-        raise ValueError("\"discretized\" only works for NUMERICAL semantic.")
+    if semantic != FeatureSemantic.NUMERICAL and discretized is not None:
+      raise ValueError("\"discretized\" only works for NUMERICAL semantic.")
 
-    if semantic not in [
-        FeatureSemantic.CATEGORICAL, FeatureSemantic.CATEGORICAL_SET
-    ]:
-      if max_vocab_count is not None:
-        raise ValueError("\"max_vocab_count\" only works for CATEGORICAL "
-                         "and CATEGORICAL_SET semantic.")
+    if (semantic
+        not in [FeatureSemantic.CATEGORICAL, FeatureSemantic.CATEGORICAL_SET]
+        and max_vocab_count is not None):
+      raise ValueError("\"max_vocab_count\" only works for CATEGORICAL "
+                       "and CATEGORICAL_SET semantic.")
 
     if semantic is None:
       # The semantic is automatically determined at training time.
@@ -214,7 +212,7 @@ class FeatureUsage(object):
         self._guide.categorial.max_vocab_count = max_vocab_count
 
     else:
-      raise ValueError("Non supported semantic {}".format(semantic))
+      raise ValueError(f"Non supported semantic {semantic}")
 
   @property
   def guide(self) -> data_spec_pb2.ColumnGuide:  # pylint: disable=g-missing-from-attributes
@@ -431,19 +429,18 @@ class CoreModel(models.Model):
           logging.warning(
               "Cannot determine the number of CPUs. Set num_threads=6")
         self._num_threads = 6
-      else:
-        if self._verbose:
+      elif self._verbose:
 
-          if self._num_threads >= 32:
-            logging.warning(
-                "The `num_threads` constructor argument is not set and the "
-                "number of CPU is os.cpu_count()=%d > 32. Setting num_threads "
-                "to 32. Set num_threads manually to use more than 32 cpus.",
-                self._num_threads)
-            self._num_threads = 32
-          else:
-            logging.info("Set num_threads = os.cpu_count() = %d",
-                         self._num_threads)
+        if self._num_threads >= 32:
+          logging.warning(
+              "The `num_threads` constructor argument is not set and the "
+              "number of CPU is os.cpu_count()=%d > 32. Setting num_threads "
+              "to 32. Set num_threads manually to use more than 32 cpus.",
+              self._num_threads)
+          self._num_threads = 32
+        else:
+          logging.info("Set num_threads = os.cpu_count() = %d",
+                       self._num_threads)
 
     if advanced_arguments is None:
       advanced_arguments = AdvancedArguments()
@@ -695,7 +692,7 @@ class CoreModel(models.Model):
     elif isinstance(inputs, tf.Tensor):
       assert len(self._semantics) == 1
       inputs = {next(iter(self._semantics.keys())): inputs}
-    elif isinstance(inputs, list) or isinstance(inputs, tuple):
+    elif isinstance(inputs, (list, tuple)):
       # Note: The name of a tensor (value.name) can change between the training
       # and the inference.
       inputs = {str(idx): value for idx, value in enumerate(inputs)}
@@ -773,7 +770,7 @@ class CoreModel(models.Model):
       pass
     elif isinstance(train_x, tf.Tensor):
       train_x = {train_x.name: train_x}
-    elif isinstance(train_x, list) or isinstance(train_x, tuple):
+    elif isinstance(train_x, (list, tuple)):
       # Note: The name of a tensor (value.name) can change between the training
       # and the inference.
       train_x = {str(idx): value for idx, value in enumerate(train_x)}
@@ -866,15 +863,15 @@ class CoreModel(models.Model):
       assert self._ranking_group is not None
       if self._ranking_group not in train_x:
         raise Exception(
-            "The ranking key feature \"{}\" is not available as an input "
-            "feature.".format(self._ranking_group))
+            f'The ranking key feature \"{self._ranking_group}\" is not available as an input feature.'
+        )
       normalized_semantic_inputs[_RANK_GROUP] = tf_core.SemanticTensor(
           tensor=tf.cast(train_x[self._ranking_group],
                          tf_core.NormalizedHashType),
           semantic=tf_core.Semantic.HASH)
 
     else:
-      raise Exception("Non supported task {}".format(self._task))
+      raise Exception(f"Non supported task {self._task}")
 
     if not self._is_trained:
       # Collects the training examples.
@@ -886,25 +883,23 @@ class CoreModel(models.Model):
         tf_core.collect_training_examples(normalized_semantic_inputs,
                                           self._training_model_id)
 
-      else:
-
-        # Each worker collects a part of the dataset.
-        if not self.capabilities().support_partial_cache_dataset_format:
-          raise ValueError(
-              f"The model {type(self)} does not support training with a TF "
-              "Distribution strategy (i.e. model.capabilities()."
-              "support_partial_cache_dataset_format == False). If the dataset "
-              "is small, simply remove "
-              "the distribution strategy scope (i.e. `with strategy.scope():` "
-              "around the model construction). If the dataset is large, use a "
-              "distributed version of the model. For Example, use "
-              "DistributedGradientBoostedTreesModel instead of "
-              "GradientBoostedTreesModel.")
-
+      elif self.capabilities().support_partial_cache_dataset_format:
         tf_core.collect_distributed_training_examples(
             inputs=normalized_semantic_inputs,
             model_id=self._training_model_id,
             dataset_path=self._distributed_partial_dataset_cache_path())
+
+      else:
+        raise ValueError(
+            f"The model {type(self)} does not support training with a TF "
+            "Distribution strategy (i.e. model.capabilities()."
+            "support_partial_cache_dataset_format == False). If the dataset "
+            "is small, simply remove "
+            "the distribution strategy scope (i.e. `with strategy.scope():` "
+            "around the model construction). If the dataset is large, use a "
+            "distributed version of the model. For Example, use "
+            "DistributedGradientBoostedTreesModel instead of "
+            "GradientBoostedTreesModel.")
 
     # Not metrics are returned during the collection of training examples.
     return {}
@@ -1010,8 +1005,9 @@ class CoreModel(models.Model):
 
     if "epochs" in kwargs:
       if kwargs["epochs"] != 1:
-        raise ValueError("all decision forests algorithms train with only 1 " +
-                         "epoch, epochs={} given".format(kwargs["epochs"]))
+        raise ValueError(
+            f'all decision forests algorithms train with only 1 epoch, epochs={kwargs["epochs"]} given'
+        )
       del kwargs["epochs"]  # Not needed since we force it to 1 below.
 
     # This callback will trigger the training at the end of the first epoch.
@@ -1129,9 +1125,7 @@ class CoreModel(models.Model):
       label_guide.type = data_spec_pb2.CATEGORICAL
       label_guide.categorial.min_vocab_frequency = 0
       label_guide.categorial.max_vocab_count = -1
-    elif self._task == Task.REGRESSION:
-      label_guide.type = data_spec_pb2.NUMERICAL
-    elif self._task == Task.RANKING:
+    elif self._task in [Task.REGRESSION, Task.RANKING]:
       label_guide.type = data_spec_pb2.NUMERICAL
     else:
       raise ValueError(
@@ -1174,9 +1168,9 @@ class CoreModel(models.Model):
 
     # Train the model.
     tf_core.train_on_file_dataset(
-        train_dataset_path=dataset_format + ":" + train_path,
-        valid_dataset_path=(dataset_format + ":" +
-                            valid_path) if valid_path else None,
+        train_dataset_path=f"{dataset_format}:{train_path}",
+        valid_dataset_path=f"{dataset_format}:{valid_path}"
+        if valid_path else None,
         feature_ids=self._normalized_input_keys,
         label_id=label_key,
         weight_id=weight_key,
@@ -1192,7 +1186,8 @@ class CoreModel(models.Model):
         training_config=self._advanced_arguments.yggdrasil_training_config,
         deployment_config=deployment_config,
         working_cache_path=os.path.join(self._temp_directory, "working_cache"),
-        distribution_config=distribution_config)
+        distribution_config=distribution_config,
+    )
 
     if self._verbose:
       logging.info("Training done. Finalizing the model.")
@@ -1267,15 +1262,15 @@ class CoreModel(models.Model):
         `keras.Model.evaluate`.
     """
     if self._train_on_evaluate:
-      if not self._is_trained.numpy():
-        self._train_model()
-      else:
+      if self._is_trained.numpy():
         raise ValueError(
             "evaluate() requested training of an already trained model -- "
             "did you call `Model.evaluate` from a `on_train_batch*` callback ?"
             "this is not yet supported in Decision Forests models, where one "
             "can only evaluate after the first epoch is finished and the "
             "model trained")
+      else:
+        self._train_model()
     return super(CoreModel, self).evaluate(*args, **kwargs)
 
   def summary(self, line_length=None, positions=None, print_fn=None):
@@ -1333,7 +1328,7 @@ class CoreModel(models.Model):
 
     try:
       # Work for numpy array and TensorFlow Tensors.
-      return tf.nest.map_structure(lambda v: v[0:1], x)
+      return tf.nest.map_structure(lambda v: v[:1], x)
     except Exception:  # pylint: disable=broad-except
       pass
 
@@ -1341,7 +1336,7 @@ class CoreModel(models.Model):
       # Works for list of primitives.
       if isinstance(x, list) and isinstance(x[0],
                                             (int, float, str, bytes, bool)):
-        return x[0:1]
+        return x[:1]
     except Exception:  # pylint: disable=broad-except
       pass
 
@@ -1542,12 +1537,11 @@ def _batch_size(inputs: Union[tf.Tensor, Dict[str, tf.Tensor]]) -> tf.Tensor:
     ValueError: Invalid arguments.
   """
 
-  if isinstance(inputs, dict):
-    for v in inputs.values():
-      return tf.shape(v)[0]
-    raise ValueError("Empty input")
-  else:
+  if not isinstance(inputs, dict):
     return tf.shape(inputs)[0]
+  for v in inputs.values():
+    return tf.shape(v)[0]
+  raise ValueError("Empty input")
 
 
 def pd_dataframe_to_tf_dataset(
@@ -1635,10 +1629,9 @@ def pd_dataframe_to_tf_dataset(
               "Negative integer classification label found. Make sure "
               "you label values are positive or stored as string.")
 
-  if weight is not None:
-    if weight not in dataframe.columns:
-      raise ValueError(
-          f"The weight \"{weight}\" is not a column of the dataframe.")
+  if weight is not None and weight not in dataframe.columns:
+    raise ValueError(
+        f"The weight \"{weight}\" is not a column of the dataframe.")
 
   if fix_feature_names:
     # Rename the features so they are compatible with SaveModel serving
@@ -1684,12 +1677,12 @@ def pd_dataframe_to_tf_dataset(
 
     tf_dataset = tf.data.Dataset.from_tensor_slices(output)
 
-  else:
-    if weight is not None:
-      raise ValueError(
-          "\"weight\" is only supported if the \"label\" is also provided")
+  elif weight is None:
     tf_dataset = tf.data.Dataset.from_tensor_slices(dict(dataframe))
 
+  else:
+    raise ValueError(
+        "\"weight\" is only supported if the \"label\" is also provided")
   # The batch size does not impact the training of TF-DF.
   if batch_size is not None:
     tf_dataset = tf_dataset.batch(batch_size)
@@ -1746,21 +1739,19 @@ def _parse_hp_template(template_name) -> Tuple[str, Optional[int]]:
   malformed_msg = (f"The template \"{template_name}\" is malformed. Expecting "
                    "\"{template}@v{version}\" or \"{template}")
 
-  if "@" in template_name:
-    # Template with version.
-    parts = template_name.split("@v")
-    if len(parts) != 2:
-      raise ValueError(malformed_msg)
-    base_name = parts[0]
-    try:
-      version = int(parts[1])
-    except:
-      raise ValueError(malformed_msg)
-    return base_name, version
-
-  else:
+  if "@" not in template_name:
     # Template without version?
     return template_name, None
+  # Template with version.
+  parts = template_name.split("@v")
+  if len(parts) != 2:
+    raise ValueError(malformed_msg)
+  base_name = parts[0]
+  try:
+    version = int(parts[1])
+  except:
+    raise ValueError(malformed_msg)
+  return base_name, version
 
 
 def _get_matching_template(
@@ -1797,8 +1788,6 @@ def _get_matching_template(
 
     if len(matching) > 1:
       raise ValueError("Internal error. Multiple matching templates")
-    return matching[0]
-
   else:
     # Template without version?
     matching = [
@@ -1807,10 +1796,11 @@ def _get_matching_template(
     matching.sort(key=lambda x: x.version, reverse=True)
 
     if not matching:
-      available = list(set([template.name for template in all_templates]))
+      available = list({template.name for template in all_templates})
       raise ValueError(f"No template is matching {template_name}. "
                        f"Available template names are: {available}")
-    return matching[0]
+
+  return matching[0]
 
 
 def _apply_hp_template(parameters: Dict[str, Any], template_name: str,
@@ -2006,11 +1996,7 @@ def _minimum_control_deps(outputs):
   if tf.executing_eagerly():
     return []  # Control dependencies not needed.
   outputs = tf.nest.flatten(outputs, expand_composites=True)
-  for out in outputs:
-    # Variables can't be control dependencies.
-    if not isinstance(out, tf.Variable):
-      return [out]  # Return first Tensor or Op from outputs.
-  return []  # No viable Tensor or Op to use for control deps.
+  return next(([out] for out in outputs if not isinstance(out, tf.Variable)), [])
 
 
 def _expand_1d(data):
@@ -2034,7 +2020,7 @@ def _expand_1d(data):
 def _write_scalar_summaries(logs, step):
   for name, value in logs.items():
     if _is_scalar(value):
-      tf.scalar("batch_" + name, value, step=step)
+      tf.scalar(f"batch_{name}", value, step=step)
 
 
 def _is_scalar(x):

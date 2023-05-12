@@ -73,10 +73,11 @@ def categorical_value_idx_to_value(column_spec: data_spec_pb2.Column,
   if column_spec.categorical.is_already_integerized:
     return value_idx
   else:
-    for key, value in column_spec.categorical.items.items():
-      if value.index == value_idx:
-        return key
-    return OUT_OF_DICTIONARY
+    return next(
+        (key for key, value in column_spec.categorical.items.items()
+         if value.index == value_idx),
+        OUT_OF_DICTIONARY,
+    )
 
 
 def categorical_column_dictionary_to_list(

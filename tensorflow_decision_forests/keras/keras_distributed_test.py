@@ -61,9 +61,9 @@ def _create_in_process_tf_ps_cluster(num_workers, num_ps):
   worker_ports = [portpicker.pick_unused_port() for _ in range(num_workers)]
   ps_ports = [portpicker.pick_unused_port() for _ in range(num_ps)]
 
-  cluster_dict = {"worker": ["localhost:%s" % port for port in worker_ports]}
+  cluster_dict = {"worker": [f"localhost:{port}" for port in worker_ports]}
   if num_ps > 0:
-    cluster_dict["ps"] = ["localhost:%s" % port for port in ps_ports]
+    cluster_dict["ps"] = [f"localhost:{port}" for port in ps_ports]
 
   cluster_spec = tf.train.ClusterSpec(cluster_dict)
   worker_config = tf.compat.v1.ConfigProto()
@@ -308,7 +308,7 @@ class TFDFDistributedTest(parameterized.TestCase, tf.test.TestCase):
           init_label_table, num_oov_buckets=1)
 
       def extract_label(*columns):
-        return columns[0:-1], label_table.lookup(columns[-1])
+        return columns[:-1], label_table.lookup(columns[-1])
 
       ds_dataset = ds_columns.map(extract_label)
       ds_dataset = ds_dataset.batch(global_batch_size)

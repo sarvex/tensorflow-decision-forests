@@ -152,7 +152,7 @@ def plot_tree(tree: tree_lib.Tree,
   with open(plotter_js_path) as f:
     plotter_js_content = f.read()
 
-  container_id = "tree_plot_" + uuid.uuid4().hex
+  container_id = f"tree_plot_{uuid.uuid4().hex}"
 
   # Converts the tree into its json representation.
   json_tree = _tree_to_json(tree, max_depth)
@@ -165,7 +165,7 @@ def plot_tree(tree: tree_lib.Tree,
   if tree.label_classes is not None:
     options["labels"] = json.dumps(tree.label_classes)
 
-  html_content = string.Template("""
+  return string.Template("""
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <div id="${container_id}"></div>
 <script>
@@ -173,22 +173,18 @@ ${plotter_js_content}
 display_tree(${options}, ${json_tree_content}, "#${container_id}")
 </script>
 """).substitute(
-    options=json.dumps(options),
-    plotter_js_content=plotter_js_content,
-    container_id=container_id,
-    json_tree_content=json.dumps(json_tree))
-
-  return html_content
+      options=json.dumps(options),
+      plotter_js_content=plotter_js_content,
+      container_id=container_id,
+      json_tree_content=json.dumps(json_tree),
+  )
 
 
 def _tree_to_json(src: tree_lib.Tree,
                   max_depth: Optional[int]) -> Dict[str, Any]:
   """Converts a tree into a json object compatible with the plotter."""
 
-  if src.root is None:
-    return {}
-
-  return _node_to_json(src.root, max_depth, 0)
+  return {} if src.root is None else _node_to_json(src.root, max_depth, 0)
 
 
 def _node_to_json(src: node_lib.AbstractNode, max_depth: Optional[int],

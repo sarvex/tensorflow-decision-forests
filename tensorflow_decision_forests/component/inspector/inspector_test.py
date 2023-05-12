@@ -122,9 +122,7 @@ class InspectorTest(parameterized.TestCase, tf.test.TestCase):
             ]
         })
 
-    num_nodes = 0
-    for _ in inspector.iterate_on_nodes():
-      num_nodes += 1
+    num_nodes = sum(1 for _ in inspector.iterate_on_nodes())
     self.assertEqual(num_nodes, 125578)
 
     tree = inspector.extract_tree(tree_idx=1)  # Second tree
@@ -154,9 +152,7 @@ class InspectorTest(parameterized.TestCase, tf.test.TestCase):
     self.assertEqual(inspector.objective(),
                      py_tree.objective.RegressionObjective(label="Rings"))
 
-    num_nodes = 0
-    for _ in inspector.iterate_on_nodes():
-      num_nodes += 1
+    num_nodes = sum(1 for _ in inspector.iterate_on_nodes())
     self.assertEqual(num_nodes, 88494)
 
     tree = inspector.extract_tree(tree_idx=10)

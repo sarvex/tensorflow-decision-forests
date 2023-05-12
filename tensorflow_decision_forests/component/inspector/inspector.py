@@ -178,13 +178,12 @@ class AbstractInspector(object):
         return py_tree.objective.ClassificationObjective(
             label=label.name,
             num_classes=label_column.categorical.number_of_unique_values - 1)
-      else:
-        # The first element is the "out-of-vocabulary" that is not used in
-        # labels.
-        label_classes = py_tree.dataspec.categorical_column_dictionary_to_list(
-            label_column)[1:]
-        return py_tree.objective.ClassificationObjective(
-            label=label.name, classes=label_classes)
+      # The first element is the "out-of-vocabulary" that is not used in
+      # labels.
+      label_classes = py_tree.dataspec.categorical_column_dictionary_to_list(
+          label_column)[1:]
+      return py_tree.objective.ClassificationObjective(
+          label=label.name, classes=label_classes)
 
     elif self.task == Task.REGRESSION:
       return py_tree.objective.RegressionObjective(label=label.name)
@@ -281,13 +280,12 @@ class AbstractInspector(object):
       Variable importances.
     """
 
-    vis = {}
-    # Collect the variable importances stored in the model.
-    for name, importance in self._header.precomputed_variable_importances.items(
-    ):
-      vis[name] = [(self._make_simple_column_spec(src.attribute_idx),
-                    src.importance) for src in importance.variable_importances]
-    return vis
+    return {
+        name: [(self._make_simple_column_spec(src.attribute_idx), src.importance)
+               for src in importance.variable_importances]
+        for name, importance in
+        self._header.precomputed_variable_importances.items()
+    }
 
   def evaluation(self) -> Optional[Evaluation]:
     """Model self evaluation.
@@ -350,19 +348,19 @@ class AbstractInspector(object):
 
       tf.summary.text("model_type", self.model_type(), step=0)
 
-      evaluation = self.evaluation()
-      if evaluation:
+      if evaluation := self.evaluation():
         for key, value in evaluation._asdict().items():
           if value is None:
             continue
           tf.summary.scalar(
-              "final/" + key,
+              f"final/{key}",
               value,
               step=0,
               description=f"{key}'s evaluation of the model after training. "
               "Note that because of rollback early stopping (or other "
               "mechanisms), the final evaluation is not necessary the last one "
-              "in the training logs.")
+              "in the training logs.",
+          )
 
       logs = self.training_logs() or []
       for log in logs:
@@ -507,14 +505,12 @@ class _AbstractDecisionForestInspector(AbstractInspector):
 
     node_generator = self.iterate_on_nodes()
 
-    trees = []
-    for _ in range(self.num_trees()):
-      trees.append(
-          py_tree.tree.Tree(
-              root=_extract_branch(node_generator),
-              label_classes=self.label_classes()))
-
-    return trees
+    return [
+        py_tree.tree.Tree(
+            root=_extract_branch(node_generator),
+            label_classes=self.label_classes(),
+        ) for _ in range(self.num_trees())
+    ]
 
 
 class _RandomForestInspector(_AbstractDecisionForestInspector):
@@ -590,14 +586,13 @@ class _GradientBoostedTreeInspector(_AbstractDecisionForestInspector):
 
     # Find the training log that correspond to the final model.
     logs = self._specialized_header.training_logs
-    final_log_idxs = [
+    if final_log_idxs := [
         entry_idx for entry_idx, entry in enumerate(logs.entries)
         if logs.number_of_trees_in_final_model == entry.number_of_trees
-    ]
-    if not final_log_idxs:
+    ]:
+      return _gbt_log_entry_to_evaluation(logs, final_log_idxs[0])
+    else:
       return None
-
-    return _gbt_log_entry_to_evaluation(logs, final_log_idxs[0])
 
   def training_logs(self) -> Optional[List[TrainLog]]:
     if not self._specialized_header.HasField("training_logs"):
@@ -667,9 +662,8 @@ def _proto_evaluation_to_evaluation(
   if src.HasField("classification"):
     cls = src.classification
     if cls.HasField("confusion"):
-      sum_diagonal = 0
-      for i in range(cls.confusion.nrow):
-        sum_diagonal += cls.confusion.counts[i + i * cls.confusion.nrow]
+      sum_diagonal = sum(cls.confusion.counts[i + i * cls.confusion.nrow]
+                         for i in range(cls.confusion.nrow))
       dst = dst._replace(accuracy=sum_diagonal / cls.confusion.sum)
 
     if cls.rocs:

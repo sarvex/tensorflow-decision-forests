@@ -189,10 +189,10 @@ def get_distribution_configuration(
 
     cluster_spec = strategy._cluster_resolver.cluster_spec().as_dict()
     rpc_layer = strategy._cluster_resolver.rpc_layer or "grpc"
-    workers_addresses = []
-    for worker_address in cluster_spec["worker"]:
-      workers_addresses.append(f"{rpc_layer}://{worker_address}")
-
+    workers_addresses = [
+        f"{rpc_layer}://{worker_address}"
+        for worker_address in cluster_spec["worker"]
+    ]
     if not workers_addresses:
       logging.warning(
           "Empty worker network addresses in the distribution strategy. "
@@ -506,9 +506,8 @@ def normalize_inputs(
             semantic_tensor.semantic, key, math.nan, normalized_inputs)
       else:
         raise ValueError(
-            "Non supported tensor dtype {} for semantic {} of feature {}"
-            .format(semantic_tensor.tensor.dtype, semantic_tensor.semantic,
-                    key))
+            f"Non supported tensor dtype {semantic_tensor.tensor.dtype} for semantic {semantic_tensor.semantic} of feature {key}"
+        )
 
     elif semantic_tensor.semantic == Semantic.CATEGORICAL:
       if semantic_tensor.tensor.dtype in FlexibleCategoricalStringTypes:
@@ -525,9 +524,8 @@ def normalize_inputs(
             dense_preprocess=lambda x: x + CATEGORICAL_INTEGER_OFFSET)
       else:
         raise ValueError(
-            "Non supported tensor dtype {} for semantic {} of feature {}"
-            .format(semantic_tensor.tensor.dtype, semantic_tensor.semantic,
-                    key))
+            f"Non supported tensor dtype {semantic_tensor.tensor.dtype} for semantic {semantic_tensor.semantic} of feature {key}"
+        )
 
     elif semantic_tensor.semantic == Semantic.CATEGORICAL_SET:
       value = semantic_tensor.tensor
@@ -543,9 +541,8 @@ def normalize_inputs(
             tensor=tf.cast(value, tf.int32) + CATEGORICAL_INTEGER_OFFSET)
       else:
         raise ValueError(
-            "Non supported tensor dtype {} for semantic {} of feature {}"
-            .format(semantic_tensor.tensor.dtype, semantic_tensor.semantic,
-                    key))
+            f"Non supported tensor dtype {semantic_tensor.tensor.dtype} for semantic {semantic_tensor.semantic} of feature {key}"
+        )
 
     elif semantic_tensor.semantic == Semantic.HASH:
       if semantic_tensor.tensor.dtype in FlexibleHashTypes:
@@ -554,9 +551,8 @@ def normalize_inputs(
             semantic_tensor.semantic, key, "", normalized_inputs)
       else:
         raise ValueError(
-            "Non supported tensor dtype {} for semantic {} of feature {}"
-            .format(semantic_tensor.tensor.dtype, semantic_tensor.semantic,
-                    key))
+            f"Non supported tensor dtype {semantic_tensor.tensor.dtype} for semantic {semantic_tensor.semantic} of feature {key}"
+        )
 
     elif semantic_tensor.semantic == Semantic.BOOLEAN:
       if semantic_tensor.tensor.dtype in FlexibleBooleanTypes:
@@ -565,13 +561,13 @@ def normalize_inputs(
             semantic_tensor.semantic, key, math.nan, normalized_inputs)
       else:
         raise ValueError(
-            "Non supported tensor dtype {} for semantic {} of feature {}"
-            .format(semantic_tensor.tensor.dtype, semantic_tensor.semantic,
-                    key))
+            f"Non supported tensor dtype {semantic_tensor.tensor.dtype} for semantic {semantic_tensor.semantic} of feature {key}"
+        )
 
     else:
-      raise ValueError("Non supported semantic {} of feature {}".format(
-          semantic_tensor.semantic, key))
+      raise ValueError(
+          f"Non supported semantic {semantic_tensor.semantic} of feature {key}"
+      )
 
   return normalized_inputs
 
@@ -580,46 +576,39 @@ def _density_tensor(value: AnyTensor, semantic: Semantic, base_key: str,
                     missing_value: Union[float, int, str]) -> tf.Tensor:
   """Density a possibly sparse tensor."""
 
-  if isinstance(value, tf.SparseTensor) or isinstance(
-      value, tf.compat.v1.SparseTensorValue):
-
-    common_error = (
-        "If the feature is multi-dimensional, use a static shape "
-        "(or a tensor != sparse tensor). If the feature is a set, specify the "
-        "set semantic manually.")
+  if isinstance(value, (tf.SparseTensor, tf.compat.v1.SparseTensorValue)):
 
     if len(value.shape) != 2:
-      raise ValueError("Expect rank 2 for tensor {}".format(value))
+      raise ValueError(f"Expect rank 2 for tensor {value}")
 
     if value.shape[1] is None:
       # The shape is not known at compilation time.
-      tf.debugging.Assert(value.dense_shape[1] == 1, [
-          "{} with tensor {} is provided as a "
-          "sparse tensor with dynamic shape. Such feature can only be scalar "
-          "but multiple values have been observed at the same time.".format(
-              base_key, value)
-      ])
+      tf.debugging.Assert(
+          value.dense_shape[1] == 1,
+          [
+              f"{base_key} with tensor {value} is provided as a sparse tensor with dynamic shape. Such feature can only be scalar but multiple values have been observed at the same time."
+          ],
+      )
 
-    else:
-      if value.shape[1] != 1:
-        raise ValueError(
-            "Invalid static shape for feature {} represented as sparse tensor "
-            "{}. Expect 1, got {}. {}".format(base_key, value, value.shape[1],
-                                              common_error))
+    elif value.shape[1] != 1:
+      common_error = (
+          "If the feature is multi-dimensional, use a static shape "
+          "(or a tensor != sparse tensor). If the feature is a set, specify the "
+          "set semantic manually.")
+
+      raise ValueError(
+          f"Invalid static shape for feature {base_key} represented as sparse tensor {value}. Expect 1, got {value.shape[1]}. {common_error}"
+      )
 
     value = tf.sparse.to_dense(value, default_value=missing_value)
 
   elif isinstance(value, tf.RaggedTensor):
     raise ValueError(
-        "Ragged tensors are not supported for feature {} with scalar type {} "
-        "and semantic {}. If the feature is a set, specify the set semantic "
-        "manually.".format(base_key, value, semantic))
+        f"Ragged tensors are not supported for feature {base_key} with scalar type {value} and semantic {semantic}. If the feature is a set, specify the set semantic manually."
+    )
 
-  elif isinstance(value, tf.Tensor):
-    pass  # Native format.
-
-  else:
-    raise ValueError("Unsupported tensor type: {}".format(value))
+  elif not isinstance(value, tf.Tensor):
+    raise ValueError(f"Unsupported tensor type: {value}")
 
   return value
 
@@ -662,8 +651,8 @@ def _unroll_and_normalize(
             semantic=semantic, tensor=value[:, dim_idx])
   else:
     raise Exception(
-        "Invalid rank {} for feature {}. Example of value: {}".format(
-            rank, base_key, value))
+        f"Invalid rank {rank} for feature {base_key}. Example of value: {value}"
+    )
 
 
 def normalize_inputs_regexp(name: Text) -> Text:
@@ -964,7 +953,7 @@ def _input_key_to_id(model_id: str, key: str) -> str:
   # not contain commas.
   #
   # Turn the character '|' into an escape symbol.
-  input_id = model_id + "_" + key.replace("|", "||").replace(",", "|c")
+  input_id = f"{model_id}_" + key.replace("|", "||").replace(",", "|c")
   if "," in input_id:
     raise ValueError(f"Internal error: Found comma in input_id {input_id}")
   return input_id
@@ -987,15 +976,14 @@ def combine_tensors_and_semantics(
   """
 
   if not set(semantics.keys()).issubset(inputs.keys()):
-    raise ValueError("semantics is not a subset of inputs "
-                     "(inputs={} vs semantics={}).".format(
-                         inputs.keys(), semantics.keys()))
+    raise ValueError(
+        f"semantics is not a subset of inputs (inputs={inputs.keys()} vs semantics={semantics.keys()})."
+    )
 
-  semantic_tensors = {}
-  for key, semantic in semantics.items():
-    semantic_tensors[key] = SemanticTensor(
-        semantic=semantic, tensor=inputs[key])
-  return semantic_tensors
+  return {
+      key: SemanticTensor(semantic=semantic, tensor=inputs[key])
+      for key, semantic in semantics.items()
+  }
 
 
 def decombine_tensors_and_semantics(
@@ -1042,25 +1030,21 @@ def infer_one_semantic(value: AnyTensor) -> Semantic:
       float, np.float, np.int16, np.int32, np.int64, int, np.float32, np.float64
   ]
 
-  if isinstance(value, tf.Tensor):
-    if dtype in numerical_types:
-      return Semantic.NUMERICAL
-    else:
-      return Semantic.CATEGORICAL
-  elif isinstance(value, tf.SparseTensor):
-    if dtype in numerical_types:
-      return Semantic.NUMERICAL
-    else:
-      return Semantic.CATEGORICAL
+  if (isinstance(value, tf.Tensor) and dtype in numerical_types
+      or not isinstance(value, tf.Tensor)
+      and isinstance(value, tf.SparseTensor) and dtype in numerical_types):
+    return Semantic.NUMERICAL
+  elif isinstance(value, (tf.Tensor, tf.SparseTensor)):
+    return Semantic.CATEGORICAL
   elif isinstance(value, tf.RaggedTensor):
     if dtype in [float, np.float, np.float32, np.float64]:
-      raise ValueError("Only categorical-set features can be represented as a "
-                       "ragged tensor. {} look numerical.".format(value))
+      raise ValueError(
+          f"Only categorical-set features can be represented as a ragged tensor. {value} look numerical."
+      )
     return Semantic.CATEGORICAL_SET
 
   raise ValueError(
-      "Cannot infer semantic for tensor \"{}\" with dtype={}".format(
-          value.name, dtype))
+      f'Cannot infer semantic for tensor \"{value.name}\" with dtype={dtype}')
 
 
 def infer_semantic(
@@ -1112,8 +1096,7 @@ def infer_semantic_from_dataframe(dataset: pd.DataFrame) -> Dict[str, Semantic]:
       semantics[col] = Semantic.CATEGORICAL
     else:
       raise Exception(
-          "Cannot infer semantic for column \"{}\" with dtype={}".format(
-              col, dtype))
+          f'Cannot infer semantic for column \"{col}\" with dtype={dtype}')
 
   return semantics
 
@@ -1142,9 +1125,8 @@ def hparams_dict_to_generic_proto(
       field.value.categorical = value
     else:
       raise Exception(
-          "Unsupported type \"{}:{}\" for hyper-parameter \"{}\". "
-          "Possible types are int (for integer), float (for real), and str "
-          "(for categorical)".format(value, type(value), key))
+          f'Unsupported type \"{value}:{type(value)}\" for hyper-parameter \"{key}\". Possible types are int (for integer), float (for real), and str (for categorical)'
+      )
 
   return generic
 

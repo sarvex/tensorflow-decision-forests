@@ -181,13 +181,7 @@ class AbstractBuilder(object):
       raise ValueError("Model builder already closed")
     self._closed = True
 
-    # List the input features.
-    #
-    # The first two column indices are used by the label and the ranking (if
-    # this is a ranking problem).
-    first_feature_idx = 1
-    if self._header.task == Task.RANKING:
-      first_feature_idx = 2
+    first_feature_idx = 2 if self._header.task == Task.RANKING else 1
     self._header.input_features[:] = range(first_feature_idx,
                                            len(self._dataspec.columns))
 
@@ -278,9 +272,9 @@ class AbstractBuilder(object):
       if dst_col_idx == self._header.label_col_idx:
         continue
 
-      if isinstance(self._objective, py_tree.objective.RankingObjective):
-        if dst_col_idx == self._header.ranking_group_col_idx:
-          continue
+      if (isinstance(self._objective, py_tree.objective.RankingObjective)
+          and dst_col_idx == self._header.ranking_group_col_idx):
+        continue
 
       if not created:
         raise ValueError(

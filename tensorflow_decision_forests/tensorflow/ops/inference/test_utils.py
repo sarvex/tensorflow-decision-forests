@@ -143,7 +143,7 @@ def build_toy_random_forest(path,
     f.write(rf_header.SerializeToString())
 
   with blob_sequence.Writer(os.path.join(
-      path, "nodes-00000-of-00001")) as output_file:
+        path, "nodes-00000-of-00001")) as output_file:
 
     for _ in range(rf_header.num_trees):
       # [a > 1 ] // Node 0
@@ -218,15 +218,7 @@ def build_toy_random_forest(path,
                   counts=[0, 1, 1, 0], sum=2)))
       output_file.write(node.SerializeToString())
 
-      if not add_boolean_features:
-        # Node 6
-        node = decision_tree_pb2.Node(
-            classifier=decision_tree_pb2.NodeClassifierOutput(
-                top_value=2,
-                distribution=distribution_pb2.IntegerDistributionDouble(
-                    counts=[0, 0, 1, 1], sum=2)))
-        output_file.write(node.SerializeToString())
-      else:
+      if add_boolean_features:
         # Node 6
         node = decision_tree_pb2.Node(
             condition=decision_tree_pb2.NodeCondition(
@@ -251,7 +243,15 @@ def build_toy_random_forest(path,
                 top_value=2,
                 distribution=distribution_pb2.IntegerDistributionDouble(
                     counts=[0, 0, 0.8, 0.2], sum=1)))
-        output_file.write(node.SerializeToString())
+
+      else:
+        # Node 6
+        node = decision_tree_pb2.Node(
+            classifier=decision_tree_pb2.NodeClassifierOutput(
+                top_value=2,
+                distribution=distribution_pb2.IntegerDistributionDouble(
+                    counts=[0, 0, 1, 1], sum=2)))
+      output_file.write(node.SerializeToString())
 
 
 def build_toy_gbdt(path, num_classes):
@@ -383,14 +383,8 @@ def build_toy_input_feature_values(features,
   is_tf2 = features is None
 
   def shape(x):
-    if use_rank_two:
-      y = [[v] for v in x]
-    else:
-      y = x
-    if is_tf2:
-      return tf.constant(y)
-    else:
-      return y
+    y = [[v] for v in x] if use_rank_two else x
+    return tf.constant(y) if is_tf2 else y
 
   if is_tf2:
 
@@ -425,12 +419,10 @@ def expected_toy_predictions_rf_weighted(add_boolean_features=False):
   if add_boolean_features:
     probabilities = [[0.0, 0.8, 0.2], [0.5, 0.5, 0.0], [0.1, 0.8, 0.1],
                      [0.8, 0.1, 0.1]]
-    classes = [b"v1", b"v2", b"v3"]
   else:
     probabilities = [[0.0, 0.5, 0.5], [0.5, 0.5, 0.0], [0.1, 0.8, 0.1],
                      [0.8, 0.1, 0.1]]
-    classes = [b"v1", b"v2", b"v3"]
-
+  classes = [b"v1", b"v2", b"v3"]
   return probabilities, classes
 
 

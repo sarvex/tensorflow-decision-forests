@@ -108,7 +108,7 @@ class NonLeafNode(AbstractNode):
     self._value = value
 
   def __repr__(self):
-    text = "NonLeafNode(condition=" + str(self._condition)
+    text = f"NonLeafNode(condition={str(self._condition)}"
     if self._pos_child is not None:
       text += f", pos_child={self._pos_child}"
     else:
@@ -135,12 +135,11 @@ def core_node_to_node(
             core_node.condition, dataspec),
         value=value_lib.core_value_to_value(core_node))
 
-  else:
-    # Leaf
-    value = value_lib.core_value_to_value(core_node)
-    if value is None:
-      raise ValueError("Leaf node should have a value")
-    return LeafNode(value)
+  # Leaf
+  value = value_lib.core_value_to_value(core_node)
+  if value is None:
+    raise ValueError("Leaf node should have a value")
+  return LeafNode(value)
 
 
 def node_to_core_node(

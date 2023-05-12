@@ -62,11 +62,20 @@ def simple_ml_categorical_int_disk_feature(value,
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-          _ctx, "SimpleMLCategoricalIntDiskFeature", name, value, "resource_id",
-          resource_id, "feature_idx", feature_idx, "feature_name", feature_name,
-          "dataset_path", dataset_path)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLCategoricalIntDiskFeature",
+          name,
+          value,
+          "resource_id",
+          resource_id,
+          "feature_idx",
+          feature_idx,
+          "feature_name",
+          feature_name,
+          "dataset_path",
+          dataset_path,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -192,10 +201,16 @@ def simple_ml_categorical_int_feature(value, id, feature_name, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLCategoricalIntFeature", name, value, "id", id,
-        "feature_name", feature_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLCategoricalIntFeature",
+          name,
+          value,
+          "id",
+          id,
+          "feature_name",
+          feature_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -281,10 +296,17 @@ def simple_ml_categorical_set_int_feature(values, row_splits, id, feature_name, 
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLCategoricalSetIntFeature", name, values, row_splits,
-        "id", id, "feature_name", feature_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLCategoricalSetIntFeature",
+          name,
+          values,
+          row_splits,
+          "id",
+          id,
+          "feature_name",
+          feature_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -386,10 +408,17 @@ def simple_ml_categorical_set_string_feature(values, row_splits, id, feature_nam
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLCategoricalSetStringFeature", name, values, row_splits,
-        "id", id, "feature_name", feature_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLCategoricalSetStringFeature",
+          name,
+          values,
+          row_splits,
+          "id",
+          id,
+          "feature_name",
+          feature_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -490,10 +519,16 @@ def simple_ml_categorical_string_feature(value, id, feature_name, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLCategoricalStringFeature", name, value, "id", id,
-        "feature_name", feature_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLCategoricalStringFeature",
+          name,
+          value,
+          "id",
+          id,
+          "feature_name",
+          feature_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -578,10 +613,14 @@ def simple_ml_file_model_loader(model_path, model_identifier, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLFileModelLoader", name, model_path, "model_identifier",
-        model_identifier)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLFileModelLoader",
+          name,
+          model_path,
+          "model_identifier",
+          model_identifier,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -665,9 +704,9 @@ def simple_ml_finalize_disk_feature(name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-          _ctx, "SimpleMLFinalizeDiskFeature", name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(_ctx,
+                                               "SimpleMLFinalizeDiskFeature",
+                                               name)
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -740,10 +779,16 @@ def simple_ml_hash_feature(value, id, feature_name, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLHashFeature", name, value, "id", id, "feature_name",
-        feature_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLHashFeature",
+          name,
+          value,
+          "id",
+          id,
+          "feature_name",
+          feature_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -835,13 +880,33 @@ def simple_ml_model_trainer(feature_ids, label_id, weight_id, model_id, model_di
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLModelTrainer", name, "feature_ids", feature_ids,
-        "label_id", label_id, "weight_id", weight_id, "model_id", model_id,
-        "model_dir", model_dir, "learner", learner, "hparams", hparams,
-        "task", task, "training_config", training_config, "deployment_config",
-        deployment_config, "guide", guide)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLModelTrainer",
+          name,
+          "feature_ids",
+          feature_ids,
+          "label_id",
+          label_id,
+          "weight_id",
+          weight_id,
+          "model_id",
+          model_id,
+          "model_dir",
+          model_dir,
+          "learner",
+          learner,
+          "hparams",
+          hparams,
+          "task",
+          task,
+          "training_config",
+          training_config,
+          "deployment_config",
+          deployment_config,
+          "guide",
+          guide,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -1024,11 +1089,20 @@ def simple_ml_numerical_disk_feature(value,
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-          _ctx, "SimpleMLNumericalDiskFeature", name, value, "resource_id",
-          resource_id, "feature_idx", feature_idx, "feature_name", feature_name,
-          "dataset_path", dataset_path)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLNumericalDiskFeature",
+          name,
+          value,
+          "resource_id",
+          resource_id,
+          "feature_idx",
+          feature_idx,
+          "feature_name",
+          feature_name,
+          "dataset_path",
+          dataset_path,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -1155,10 +1229,16 @@ def simple_ml_numerical_feature(value, id, feature_name, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLNumericalFeature", name, value, "id", id,
-        "feature_name", feature_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLNumericalFeature",
+          name,
+          value,
+          "id",
+          id,
+          "feature_name",
+          feature_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -1241,9 +1321,9 @@ def simple_ml_show_model(model_identifier, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLShowModel", name, "model_identifier", model_identifier)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(_ctx, "SimpleMLShowModel", name,
+                                               "model_identifier",
+                                               model_identifier)
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -1328,10 +1408,13 @@ def simple_ml_unload_model(model_identifier, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLUnloadModel", name, "model_identifier",
-        model_identifier)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLUnloadModel",
+          name,
+          "model_identifier",
+          model_identifier,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:

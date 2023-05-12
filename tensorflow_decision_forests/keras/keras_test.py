@@ -363,9 +363,7 @@ def build_model(signature: Signature, dataset: Dataset, **args) -> models.Model:
     raw_inputs, processed_inputs = build_preprocessing(dataset)
     processed_inputs = {value.name: value for value in processed_inputs}
     preprocessing = models.Model(inputs=raw_inputs, outputs=processed_inputs)
-    features = []
-    for key in processed_inputs.keys():
-      features.append(keras.FeatureUsage(key))
+    features = [keras.FeatureUsage(key) for key in processed_inputs]
     model = keras.RandomForestModel(
         preprocessing=preprocessing, features=features, **args)
 
@@ -1202,7 +1200,9 @@ class TFDFTest(parameterized.TestCase, tf.test.TestCase):
         core._apply_hp_template({"p1": 1.0},
                                 "t1",
                                 templates,
-                                explicit_parameters=set(["p1"])), {"p1": 1.0})
+                                explicit_parameters={"p1"}),
+        {"p1": 1.0},
+    )
 
     with self.assertRaises(ValueError):
       core._apply_hp_template({"p1": 1.0},
@@ -1224,10 +1224,10 @@ class TFDFTest(parameterized.TestCase, tf.test.TestCase):
     self.assertEqual(f.last_explicit_args, set([]))
 
     f(a=5)
-    self.assertEqual(f.last_explicit_args, set(["a"]))
+    self.assertEqual(f.last_explicit_args, {"a"})
 
     f(b=6, c=7)
-    self.assertEqual(f.last_explicit_args, set(["b", "c"]))
+    self.assertEqual(f.last_explicit_args, {"b", "c"})
 
   def test_get_all_models(self):
     print(keras.get_all_models())

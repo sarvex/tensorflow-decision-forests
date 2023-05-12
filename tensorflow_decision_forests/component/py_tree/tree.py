@@ -38,10 +38,6 @@ class Tree(object):
 
   def __repr__(self):
     content = "Tree("
-    if self._root:
-      content += f"{self._root}"
-    else:
-      content += "None"
-
+    content += f"{self._root}" if self._root else "None"
     content += ",label_classes={self.label_classes})"
     return content

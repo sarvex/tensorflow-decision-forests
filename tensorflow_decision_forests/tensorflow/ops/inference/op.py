@@ -56,10 +56,15 @@ def simple_ml_create_model_resource(container="", shared_name="", name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLCreateModelResource", name, "container", container,
-        "shared_name", shared_name)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLCreateModelResource",
+          name,
+          "container",
+          container,
+          "shared_name",
+          shared_name,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -448,10 +453,14 @@ def simple_ml_load_model_from_path(path, model_identifier, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLLoadModelFromPath", name, path, "model_identifier",
-        model_identifier)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx,
+          "SimpleMLLoadModelFromPath",
+          name,
+          path,
+          "model_identifier",
+          model_identifier,
+      )
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:
@@ -522,9 +531,9 @@ def simple_ml_load_model_from_path_with_handle(model_handle, path, name=None):
   tld = _ctx._thread_local_data
   if tld.is_eager:
     try:
-      _result = pywrap_tfe.TFE_Py_FastPathExecute(
-        _ctx, "SimpleMLLoadModelFromPathWithHandle", name, model_handle, path)
-      return _result
+      return pywrap_tfe.TFE_Py_FastPathExecute(
+          _ctx, "SimpleMLLoadModelFromPathWithHandle", name, model_handle,
+          path)
     except _core._NotOkStatusException as e:
       _ops.raise_from_not_ok_status(e, name)
     except _core._FallbackException:

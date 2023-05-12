@@ -97,8 +97,7 @@ def infer_semantic_from_dataframe(dataset: pd.DataFrame) -> Dict[str, Semantic]:
       semantics[col] = Semantic.CATEGORICAL
     else:
       raise Exception(
-          "Cannot infer semantic for column \"{}\" with dtype={}".format(
-              col, dtype))
+          f'Cannot infer semantic for column \"{col}\" with dtype={dtype}')
 
   return semantics
 
